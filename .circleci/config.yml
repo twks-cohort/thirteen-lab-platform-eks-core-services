@@ -13,11 +13,11 @@ parameters:
   context:
     description: circleci context for all jobs
     type: string
-    default: twdps-core-labs-team
+    default: cohorts-global
   terraform-version:
     description: terraform version for all jobs
     type: string
-    default: "1.2.2"
+    default: "1.3.3"
   executor-image:
     description: image to use for local jobs
     type: string
@@ -119,9 +119,9 @@ jobs:
       #     name: deploy datadog agents
       #     command: bash scripts/deploy_datadog_agent.sh << parameters.cluster >>
       # - do/circle-deploy
-      - do/slack-webhook:
-          message: lab-platform-eks-core-services << parameters.cluster >> deployment
-          webhook-url: $LAB_EVENTS_CHANNEL_WEBHOOK
+      # - do/slack-webhook:
+      #     message: lab-platform-eks-core-services << parameters.cluster >> deployment
+      #     webhook-url: $LAB_EVENTS_CHANNEL_WEBHOOK
 
       - run:
           name: deploy pixie labs
@@ -221,85 +221,85 @@ jobs:
   #     - checkout
   #     - setup_remote_docker
   #     - set-environment:
-  #         cluster: sandbox-us-east-2
+  #         cluster: sandbox-eu-central-1
   #         source-env: << parameters.source-env >>
   #     - run:
   #         name: install requirements
   #         command: pip install -r requirements.txt
   #     - run:
   #         name: update lab-platform-eks-core-services dashboard
-  #         command: bash scripts/deploy_dashboard.sh sandbox-us-east-2
+  #         command: bash scripts/deploy_dashboard.sh sandbox-eu-central-1
 
 workflows:
   version: 2
 
-  deploy sandbox-us-east-2 core services:
+  deploy sandbox-eu-central-1 core services:
     jobs:
       - terraform/apply:
-          name: create sandbox-us-east-2 core service irsa roles
+          name: create sandbox-eu-central-1 core service irsa roles
           context: << pipeline.parameters.context >>
           shell:  op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
-          workspace: sandbox-us-east-2
+          workspace: sandbox-eu-central-1
           terraform-version: << pipeline.parameters.terraform-version >>
           before-terraform:
             - set-environment:
-                cluster: sandbox-us-east-2
+                cluster: sandbox-eu-central-1
                 source-env: op.nonprod.env
           filters: *on-push-main
 
       - deploy-core-services:
-          name: deploy sandbox-us-east-2 core-services
+          name: deploy sandbox-eu-central-1 core-services
           context: << pipeline.parameters.context >>
           shell:  op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           source-env: op.nonprod.env
-          cluster: sandbox-us-east-2
+          cluster: sandbox-eu-central-1
           requires:
-            - create sandbox-us-east-2 core service irsa roles
+            - create sandbox-eu-central-1 core service irsa roles
           filters: *on-push-main
 
       - validate-core-services:
-          name: validate sandbox-us-east-2 core services
+          name: validate sandbox-eu-central-1 core services
           context: << pipeline.parameters.context >>
           shell:  op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           source-env: op.nonprod.env
-          cluster: sandbox-us-east-2
+          cluster: sandbox-eu-central-1
           requires:
-            - deploy sandbox-us-east-2 core-services
+            - deploy sandbox-eu-central-1 core-services
           filters: *on-push-main
 
-  release prod-us-east-1 core services:
-    jobs:
-      - terraform/apply:
-          name: create prod-us-east-1 core service irsa roles
-          context: << pipeline.parameters.context >>
-          shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
-          workspace: prod-us-east-1
-          terraform-version: << pipeline.parameters.terraform-version >>
-          before-terraform:
-            - set-environment:
-                cluster: prod-us-east-1
-                source-env: op.prod.env
-          filters: *on-tag-main
+  # release prod-us-east-1 core services:
+  #   jobs:
+  #     - terraform/apply:
+  #         name: create prod-us-east-1 core service irsa roles
+  #         context: << pipeline.parameters.context >>
+  #         shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
+  #         workspace: prod-us-east-1
+  #         terraform-version: << pipeline.parameters.terraform-version >>
+  #         before-terraform:
+  #           - set-environment:
+  #               cluster: prod-us-east-1
+  #               source-env: op.prod.env
+  #         filters: *on-tag-main
 
-      - deploy-core-services:
-          name: release prod-us-east-1 core-services
-          context: << pipeline.parameters.context >>
-          shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
-          source-env: op.prod.env
-          cluster: prod-us-east-1
-          requires:
-            - create prod-us-east-1 core service irsa roles
-          filters: *on-tag-main
+  #     - deploy-core-services:
+  #         name: release prod-us-east-1 core-services
+  #         context: << pipeline.parameters.context >>
+  #         shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
+  #         source-env: op.prod.env
+  #         cluster: prod-us-east-1
+  #         requires:
+  #           - create prod-us-east-1 core service irsa roles
+  #         filters: *on-tag-main
 
-      - validate-core-services:
-          name: validate prod-us-east-1 core services
-          context: << pipeline.parameters.context >>
-          shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
-          source-env: op.prod.env
-          cluster: prod-us-east-1
-          requires:
-            - release prod-us-east-1 core-services
-          filters: *on-tag-main
+  #     - validate-core-services:
+  #         name: validate prod-us-east-1 core services
+  #         context: << pipeline.parameters.context >>
+  #         shell:  op run --env-file op.prod.env -- /bin/bash -eo pipefail
+  #         source-env: op.prod.env
+  #         cluster: prod-us-east-1
+  #         requires:
+  #           - release prod-us-east-1 core-services
+  #         filters: *on-tag-main
 
   # generate-release-notes:
   #   jobs:
@@ -312,17 +312,17 @@ workflows:
   # deploy core service monitors:
   #   jobs:
   #     - update-monitors:
-  #         name: update sandbox-us-east-2 monitors
+  #         name: update sandbox-eu-central-1 monitors
   #         context: << pipeline.parameters.context >>
   #         shell:  op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
   #         source-env: op.nonprod.env
-  #         cluster: sandbox-us-east-2
+  #         cluster: sandbox-eu-central-1
   #         filters: *on-push-main
 
   #     - approve prod-us-east-1 monitors release:
   #         type: approval
   #         requires:
-  #           - update sandbox-us-east-2 monitors
+  #           - update sandbox-eu-central-1 monitors
   #         filters: *on-push-main
 
   #     - update-monitors:
@@ -354,11 +354,11 @@ workflows:
                 - main
     jobs:
       - validate-core-services:
-          name: validate sandbox-us-east-2
+          name: validate sandbox-eu-central-1
           context: << pipeline.parameters.context >>
           shell:  op run --env-file op.nonprod.env -- /bin/bash -eo pipefail
           source-env: op.nonprod.env
-          cluster: sandbox-us-east-2
+          cluster: sandbox-eu-central-1
       - validate-core-services:
           name: validate prod-us-east-1
           context: << pipeline.parameters.context >>
