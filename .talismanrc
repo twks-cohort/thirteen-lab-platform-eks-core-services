@@ -1,4 +1,6 @@
 fileignoreconfig:
+- filename: environments/sandbox-eu-central-1.auto.tfvars.json.tpl
+  checksum: a03a59c8bde76b85ac1f3c6703ad0419e3dedbbe476bce28a01a6c37af1d651a
 - filename: op.nonprod.env
   checksum: f6246960225d7a1150873edf3c56313a83167021ec12a93ff2d67f6b4d864452
 version: "1.0"
